@@ -204,7 +204,7 @@ export default function Page() {
                   community orgs because loneliness is a public health problem and we want to
                   be on the right side of it.
                 </p>
-                <div className="text-sm text-[#8B7355] italic">— Alex, founder</div>
+                <div className="text-sm text-[#8B7355] italic">— Max & Alex, founders</div>
               </div>
             </div>
           </div>
