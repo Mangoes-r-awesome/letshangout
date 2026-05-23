@@ -11,11 +11,11 @@ export default async function AppPage() {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("name, emoji, is_admin")
+    .select("name, emoji, is_admin, has_completed_onboarding")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.name) redirect("/onboarding");
+  if (!profile?.has_completed_onboarding) redirect("/onboarding");
 
   const { data: squads } = await supabase
     .from("squads")
