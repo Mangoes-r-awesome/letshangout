@@ -37,17 +37,19 @@ async function call(systemPrompt: string, userPrompt: string, maxTokens = 500): 
 /**
  * Generates a nudge message for someone who hasn't RSVP'd.
  * Tone escalates with their reply rate and how close the event is.
+ * Note: caller appends the deep link separately, so leave the message under ~130 chars
+ * to fit within 160-char SMS limit after the URL is added.
  */
 export async function generateNudge(opts: {
   recipientName: string;
   hangoutTitle: string;
   daysUntil: number;
-  recipientReplyRate: number; // 0-100
-  nudgeAttemptNumber: number; // 1st, 2nd, 3rd time we're asking
+  recipientReplyRate: number;
+  nudgeAttemptNumber: number;
 }): Promise<string> {
   const toneLevel = Math.min(5, 1 + opts.nudgeAttemptNumber + (opts.recipientReplyRate < 50 ? 1 : 0) + (opts.daysUntil < 3 ? 1 : 0));
 
-  const system = `You are a friendly Australian agent for an app called Hangouts. Your job is writing nudge SMS messages to friends who haven't RSVP'd to a group plan yet. Your voice: casual, Australian, mate-like, never corporate, never preachy, uses light cheek and minimal emojis. Always under 160 characters.
+  const system = `You are a friendly Australian agent for an app called Hangouts. Your job is writing nudge SMS messages to friends who haven't RSVP'd to a group plan yet. Your voice: casual, Australian, mate-like, never corporate, never preachy, uses light cheek and minimal emojis. Always under 130 characters to leave room for a link.
 
 Tone level ${toneLevel}/5:
 - 1: gentle reminder, friendly
@@ -56,7 +58,7 @@ Tone level ${toneLevel}/5:
 - 4: spicy, calling out the flake behaviour
 - 5: maximum spice, calling out their reply rate publicly visible in the squad
 
-Never use the word "RSVP" — say "yes or no" or "you in or out". Never use exclamation marks. Sign messages like a mate would — no signature needed.`;
+Never use the word "RSVP" — say "yes or no" or "you in or out". Never use exclamation marks. Never include a URL or link in the message — the system adds that automatically. Output only the message text.`;
 
   const user = `Generate a single SMS nudge to send to ${opts.recipientName} about: "${opts.hangoutTitle}". They have not yet responded. This is nudge attempt #${opts.nudgeAttemptNumber}. They reply ${opts.recipientReplyRate}% of the time. The event is ${opts.daysUntil} days away. Output ONLY the message text, nothing else, no quotes.`;
 
@@ -64,10 +66,6 @@ Never use the word "RSVP" — say "yes or no" or "you in or out". Never use excl
   return text.trim().replace(/^["']|["']$/g, "");
 }
 
-/**
- * Parses a free-text SMS reply into an RSVP status.
- * Returns one of: 'in', 'maybe', 'out', 'unclear'
- */
 export async function parseRsvpReply(opts: {
   hangoutTitle: string;
   replyText: string;
@@ -92,13 +90,9 @@ Australian colloquialisms map like this:
   }
 }
 
-/**
- * Suggests activity ideas for a squad based on past hangouts and preferences.
- * Returns array of suggestions for the "What's next" section.
- */
 export async function suggestActivities(opts: {
   squadName: string;
-  pastHangouts: string[]; // titles of past events
+  pastHangouts: string[];
   location?: string;
   budget?: string;
 }): Promise<Array<{ name: string; emoji: string; reason: string; match: number; cost: string; duration: string }>> {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase-server";
+import { generateShortCode } from "@/lib/short-code";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +14,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Squad and title required" }, { status: 400 });
     }
 
-    // Verify user is in this squad
     const { data: membership } = await supabase
       .from("squad_members")
       .select("role")
@@ -24,7 +24,18 @@ export async function POST(req: NextRequest) {
 
     const admin = createAdminClient();
 
-    // Create hangout
+    // Generate a unique short code (retry on collision — extremely rare with 31^4 = 923K combos)
+    let shortCode = generateShortCode();
+    for (let i = 0; i < 5; i++) {
+      const { data: existing } = await admin
+        .from("hangouts")
+        .select("id")
+        .eq("short_code", shortCode)
+        .maybeSingle();
+      if (!existing) break;
+      shortCode = generateShortCode();
+    }
+
     const { data: hangout, error: hErr } = await admin
       .from("hangouts")
       .insert({
@@ -39,6 +50,7 @@ export async function POST(req: NextRequest) {
         cost_per_person: cost_per_person ? parseFloat(cost_per_person) : null,
         bring: bring?.trim() || null,
         status: "proposed",
+        short_code: shortCode,
       })
       .select()
       .single();
@@ -48,7 +60,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Couldn't create" }, { status: 500 });
     }
 
-    // Auto-create RSVPs for all squad members (organiser = in, others = pending)
     const { data: members } = await admin
       .from("squad_members")
       .select("user_id")

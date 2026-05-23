@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase-server";
 import { sendSms } from "@/lib/twilio";
 import { generateNudge } from "@/lib/claude";
+import { hangoutDeepLink } from "@/lib/short-code";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,10 +17,9 @@ export async function POST(req: NextRequest) {
 
     const admin = createAdminClient();
 
-    // Fetch hangout + target user
     const { data: hangout } = await admin
       .from("hangouts")
-      .select("id, squad_id, title, starts_at")
+      .select("id, squad_id, title, starts_at, short_code")
       .eq("id", hangout_id)
       .single();
     if (!hangout) return NextResponse.json({ error: "Hangout not found" }, { status: 404 });
@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
       .single();
     if (!target?.phone) return NextResponse.json({ error: "Target has no phone" }, { status: 400 });
 
-    // Verify sender is in the same squad
     const { data: senderMembership } = await admin
       .from("squad_members")
       .select("role")
@@ -40,7 +39,6 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
     if (!senderMembership) return NextResponse.json({ error: "Not authorised" }, { status: 403 });
 
-    // Get target's reply rate + nudge attempt number for tone calibration
     const { data: stats } = await admin
       .from("squad_stats")
       .select("reply_rate")
@@ -54,18 +52,17 @@ export async function POST(req: NextRequest) {
       .eq("hangout_id", hangout_id)
       .eq("user_id", target_user_id);
 
-    // Calc days until
     let daysUntil = 14;
     if (hangout.starts_at) {
       const diffMs = new Date(hangout.starts_at).getTime() - Date.now();
       daysUntil = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
     }
 
-    // Generate message (or use custom override)
-    let message = custom_message;
-    if (!message) {
+    // Generate the body
+    let body = custom_message;
+    if (!body) {
       try {
-        message = await generateNudge({
+        body = await generateNudge({
           recipientName: target.name || "mate",
           hangoutTitle: hangout.title,
           daysUntil,
@@ -74,38 +71,39 @@ export async function POST(req: NextRequest) {
         });
       } catch (err) {
         console.error("[nudges/send] claude failed, falling back:", err);
-        message = `Hey ${target.name || "mate"} — you in or out for ${hangout.title}? 🙃`;
+        body = `Hey ${target.name || "mate"} — you in or out for ${hangout.title}? 🙃`;
       }
     }
 
-    // Send via Twilio
+    // Append the deep link. Two doors into the same RSVP record — tap or text reply.
+    const link = hangoutDeepLink(hangout.short_code);
+    const fullMessage = `${body} ${link}`;
+
     let twilioResult = null;
     try {
-      twilioResult = await sendSms({ to: target.phone, body: message });
+      twilioResult = await sendSms({ to: target.phone, body: fullMessage });
     } catch (err: any) {
       console.error("[nudges/send] twilio failed:", err);
       return NextResponse.json({ error: `SMS failed: ${err.message}` }, { status: 502 });
     }
 
-    // Log nudge
     const toneLevel = Math.min(5, 1 + (priorNudges || 0) + ((stats?.reply_rate ?? 75) < 50 ? 1 : 0));
     await admin.from("nudges").insert({
       hangout_id,
       user_id: target_user_id,
       channel: "sms",
       tone_level: toneLevel,
-      message,
+      message: fullMessage,
       triggered_by: "manual",
       triggered_by_user: user.id,
     });
 
-    // Update last_nudge_at on hangout
     await admin
       .from("hangouts")
       .update({ last_nudge_at: new Date().toISOString() })
       .eq("id", hangout_id);
 
-    return NextResponse.json({ ok: true, message, twilio_sid: twilioResult?.sid, twilio_status: twilioResult?.status });
+    return NextResponse.json({ ok: true, message: fullMessage, twilio_sid: twilioResult?.sid });
   } catch (err: any) {
     console.error("[nudges/send] error:", err);
     return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
