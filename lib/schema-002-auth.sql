@@ -47,6 +47,20 @@ create trigger on_auth_user_created
 -- 3. Row-Level Security
 -- =====================================================
 
+-- Helper: bypasses RLS so squad_members policies don't recurse on themselves.
+create or replace function public.is_squad_member(_squad uuid, _user uuid default auth.uid())
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (select 1 from public.squad_members where squad_id = _squad and user_id = _user);
+$$;
+
+revoke all on function public.is_squad_member(uuid, uuid) from public;
+grant execute on function public.is_squad_member(uuid, uuid) to authenticated, service_role;
+
 -- USERS: people can read their own row + rows of squadmates. Edit only own.
 alter table public.users enable row level security;
 
@@ -58,9 +72,8 @@ drop policy if exists "users read squadmates" on public.users;
 create policy "users read squadmates" on public.users
   for select using (
     exists (
-      select 1 from public.squad_members sm1
-      join public.squad_members sm2 on sm1.squad_id = sm2.squad_id
-      where sm1.user_id = auth.uid() and sm2.user_id = public.users.id
+      select 1 from public.squad_members sm
+      where sm.user_id = public.users.id and public.is_squad_member(sm.squad_id)
     )
   );
 
@@ -68,14 +81,12 @@ drop policy if exists "users update self" on public.users;
 create policy "users update self" on public.users
   for update using (auth.uid() = id) with check (auth.uid() = id);
 
--- SQUADS: members can read; only members can update; insert via server (service role)
+-- SQUADS: members can read; only organisers can update; insert via server (service role)
 alter table public.squads enable row level security;
 
 drop policy if exists "squads read by members" on public.squads;
 create policy "squads read by members" on public.squads
-  for select using (
-    exists (select 1 from public.squad_members where squad_id = squads.id and user_id = auth.uid())
-  );
+  for select using (public.is_squad_member(id));
 
 drop policy if exists "squads update by organisers" on public.squads;
 create policy "squads update by organisers" on public.squads
@@ -91,12 +102,7 @@ alter table public.squad_members enable row level security;
 
 drop policy if exists "squad_members read by squadmates" on public.squad_members;
 create policy "squad_members read by squadmates" on public.squad_members
-  for select using (
-    exists (
-      select 1 from public.squad_members sm
-      where sm.squad_id = squad_members.squad_id and sm.user_id = auth.uid()
-    )
-  );
+  for select using (public.is_squad_member(squad_id));
 
 drop policy if exists "squad_members leave self" on public.squad_members;
 create policy "squad_members leave self" on public.squad_members
@@ -107,12 +113,7 @@ alter table public.hangouts enable row level security;
 
 drop policy if exists "hangouts read by squad" on public.hangouts;
 create policy "hangouts read by squad" on public.hangouts
-  for select using (
-    exists (
-      select 1 from public.squad_members
-      where squad_id = hangouts.squad_id and user_id = auth.uid()
-    )
-  );
+  for select using (public.is_squad_member(squad_id));
 
 alter table public.rsvps enable row level security;
 
@@ -121,8 +122,7 @@ create policy "rsvps read by squad" on public.rsvps
   for select using (
     exists (
       select 1 from public.hangouts h
-      join public.squad_members sm on sm.squad_id = h.squad_id
-      where h.id = rsvps.hangout_id and sm.user_id = auth.uid()
+      where h.id = rsvps.hangout_id and public.is_squad_member(h.squad_id)
     )
   );
 
@@ -137,8 +137,7 @@ create policy "nudges read by squad" on public.nudges
   for select using (
     exists (
       select 1 from public.hangouts h
-      join public.squad_members sm on sm.squad_id = h.squad_id
-      where h.id = nudges.hangout_id and sm.user_id = auth.uid()
+      where h.id = nudges.hangout_id and public.is_squad_member(h.squad_id)
     )
   );
 
