@@ -37,6 +37,37 @@ export async function sendSms({ to, body }: { to: string; body: string }): Promi
   return { sid: data.sid, status: data.status };
 }
 
+// Places an outbound voice call. Twilio fetches `twimlUrl` when the call is
+// answered and reads back the TwiML response (typically <Say>script</Say>).
+// The Twilio number must have Voice capability enabled (SMS-only numbers fail).
+export async function placeCall({ to, twimlUrl }: { to: string; twimlUrl: string }): Promise<{ sid: string; status: string }> {
+  const from = process.env.TWILIO_NUMBER;
+  if (!from) throw new Error("TWILIO_NUMBER required");
+
+  const sid = process.env.TWILIO_ACCOUNT_SID!;
+  const url = `${TWILIO_BASE}/Accounts/${sid}/Calls.json`;
+
+  const params = new URLSearchParams({ To: to, From: from, Url: twimlUrl });
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: authHeader(),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: params.toString(),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("[twilio] call failed:", res.status, text);
+    throw new Error(`Twilio call error ${res.status}: ${text}`);
+  }
+
+  const data = await res.json();
+  return { sid: data.sid, status: data.status };
+}
+
 /**
  * Validates that a request actually came from Twilio (signed webhook).
  * Important for the inbound SMS endpoint — otherwise anyone could spoof replies.

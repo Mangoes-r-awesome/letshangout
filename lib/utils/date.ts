@@ -14,6 +14,42 @@ export type RelativeMeta = {
   isSoon: boolean;
 };
 
+// Days until the NEXT occurrence of the given birthday (rolls year over).
+// Input format: ISO date "YYYY-MM-DD". Returns days >= 0 (0 = today).
+export function daysUntilBirthday(birthday: string): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthday);
+  if (!m) return null;
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const now = new Date();
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let next = new Date(todayMid.getFullYear(), month - 1, day);
+  if (next < todayMid) next = new Date(todayMid.getFullYear() + 1, month - 1, day);
+  return Math.round((next.getTime() - todayMid.getTime()) / 86400000);
+}
+
+// Compute age the person will be on their NEXT birthday.
+export function ageOnNextBirthday(birthday: string): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthday);
+  if (!m) return null;
+  const birthYear = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const now = new Date();
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const nextThisYear = new Date(todayMid.getFullYear(), month - 1, day);
+  const nextYear = nextThisYear < todayMid ? todayMid.getFullYear() + 1 : todayMid.getFullYear();
+  return nextYear - birthYear;
+}
+
+export function birthdayLabel(days: number): string {
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  if (days <= 7) return `In ${days} days`;
+  if (days <= 14) return "Next week";
+  return `In ${days} days`;
+}
+
 export function relativeMeta(startsAt: string | null): RelativeMeta | null {
   if (!startsAt) return null;
   const start = new Date(startsAt);

@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users, Plus, Flame, Tag, ChevronRight } from "lucide-react";
+import { ArrowLeft, Users, Plus, Flame, Tag, ChevronRight, Cake } from "lucide-react";
 import InviteLink from "@/components/InviteLink";
 import DealsTeaser from "@/components/DealsTeaser";
-import { relativeMeta } from "@/lib/utils/date";
+import { relativeMeta, daysUntilBirthday, ageOnNextBirthday, birthdayLabel } from "@/lib/utils/date";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +41,7 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
     { data: hangouts },
     { data: stats },
   ] = await Promise.all([
-    supabase.from("squad_members").select("role, users(id, name, emoji)").eq("squad_id", squad.id),
+    supabase.from("squad_members").select("role, users(id, name, emoji, birthday)").eq("squad_id", squad.id),
     supabase.from("hangouts").select("id, title, cover_emoji, starts_at, status").eq("squad_id", squad.id).order("starts_at", { ascending: true, nullsFirst: false }).limit(8),
     supabase.from("squad_stats").select("user_id, reply_rate, name, emoji").eq("squad_id", squad.id).order("reply_rate", { ascending: false }).limit(3),
   ]);
@@ -49,6 +49,23 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
   const upcoming: Hangout[] = (hangouts ?? []).filter((h: Hangout) => h.status === "proposed" || h.status === "confirmed");
   const [hero, ...rest] = upcoming;
   const heroMeta = hero ? relativeMeta(hero.starts_at) : null;
+
+  // Upcoming birthdays in the next 30 days, soonest first
+  const upcomingBirthdays = ((members ?? [])
+    .map((m: any) => {
+      if (!m.users?.birthday) return null;
+      const days = daysUntilBirthday(m.users.birthday);
+      if (days === null || days > 30) return null;
+      return {
+        id: m.users.id,
+        name: m.users.name as string,
+        emoji: m.users.emoji as string,
+        days,
+        age: ageOnNextBirthday(m.users.birthday),
+      };
+    })
+    .filter(Boolean) as { id: string; name: string; emoji: string; days: number; age: number | null }[])
+    .sort((a, b) => a.days - b.days);
 
   return (
     <main className="min-h-screen bg-page text-fg">
@@ -196,6 +213,42 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
                 ))}
               </div>
             </Link>
+          </section>
+        )}
+
+        {/* Upcoming birthdays */}
+        {upcomingBirthdays.length > 0 && (
+          <section className="mb-6">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Cake size={12} className="text-sun" />
+              <div className="text-[10px] font-bold text-fg-muted tracking-[0.25em] uppercase">Coming up</div>
+            </div>
+            <div className="bg-card border border-line rounded-2xl overflow-hidden">
+              {upcomingBirthdays.map((b, i) => {
+                const soon = b.days <= 3;
+                return (
+                  <div
+                    key={b.id}
+                    className={`relative px-4 py-3 flex items-center gap-3 ${i < upcomingBirthdays.length - 1 ? "border-b border-line" : ""}`}
+                  >
+                    {soon && <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-sun" />}
+                    <div className="text-2xl">{b.emoji}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold flex items-center gap-1.5">
+                        <span className="truncate">{b.name}'s birthday</span>
+                        {b.age != null && (
+                          <span className="text-[10px] text-fg-muted font-medium">turning {b.age}</span>
+                        )}
+                      </div>
+                      <div className="display italic text-[12px] text-sun mt-0.5">
+                        {birthdayLabel(b.days)}
+                      </div>
+                    </div>
+                    <Cake size={14} className={soon ? "text-sun" : "text-fg-faint"} />
+                  </div>
+                );
+              })}
+            </div>
           </section>
         )}
 

@@ -90,6 +90,42 @@ Australian colloquialisms map like this:
   }
 }
 
+/**
+ * Generates a short voice-call script for a ghoster. ~25-35 seconds when read by
+ * Twilio's Polly TTS. Plain text (no SSML, no URLs) — TTS just reads it verbatim.
+ * Tone is firm but warm; calling is the escalation after SMS has been ignored.
+ */
+export async function generateVoiceScript(opts: {
+  recipientName: string;
+  hangoutTitle: string;
+  daysUntil: number;
+  organiserName: string;
+  confirmedCount: number;
+  smsNudgesSent: number;
+}): Promise<string> {
+  const system = `You write short voice-call scripts read aloud by text-to-speech to friends who haven't replied to a group plan. The call comes from an Australian app called Hangouts on behalf of the organiser. Your voice: warm, direct, a touch cheeky but not aggressive. Aussie tone. Plain text only — no markdown, no quotes, no URLs, no SSML, no emojis (TTS will mangle them).
+
+Constraints:
+- 50 to 80 words. ~25-35 seconds spoken.
+- Open with "Hey ${opts.recipientName}, it's the Hangouts agent."
+- Mention the organiser by name, the hangout title, how many are already in.
+- Make the ask explicit: "yes or no, simple as that."
+- End with: "If now's not a good time, just reply to the text we sent earlier."
+- Never sound like a robocall. Sound like a mate following up.`;
+
+  const user = `Recipient: ${opts.recipientName}
+Hangout: "${opts.hangoutTitle}"
+Days until: ${opts.daysUntil}
+Organiser: ${opts.organiserName}
+Already confirmed: ${opts.confirmedCount}
+SMS nudges already sent: ${opts.smsNudgesSent}
+
+Write the voice script. Output only the script text, nothing else.`;
+
+  const text = await call(system, user, 300);
+  return text.trim().replace(/^["']|["']$/g, "");
+}
+
 export async function suggestActivities(opts: {
   squadName: string;
   pastHangouts: string[];

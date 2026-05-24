@@ -20,6 +20,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("🦁");
+  const [birthday, setBirthday] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [error, setError] = useState("");
 
@@ -41,7 +42,11 @@ export default function OnboardingPage() {
     }
     const { error: upErr } = await supabase
       .from("users")
-      .update({ name: name.trim(), emoji })
+      .update({
+        name: name.trim(),
+        emoji,
+        ...(birthday ? { birthday } : {}),
+      })
       .eq("id", user.id);
     setSavingProfile(false);
     if (upErr) {
@@ -107,6 +112,8 @@ export default function OnboardingPage() {
             setName={setName}
             emoji={emoji}
             setEmoji={setEmoji}
+            birthday={birthday}
+            setBirthday={setBirthday}
             onNext={handleIdentityNext}
             saving={savingProfile}
             error={error}

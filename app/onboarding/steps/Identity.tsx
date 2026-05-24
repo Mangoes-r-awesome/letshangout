@@ -8,6 +8,8 @@ export default function Identity({
   setName,
   emoji,
   setEmoji,
+  birthday,
+  setBirthday,
   onNext,
   saving,
   error,
@@ -16,6 +18,8 @@ export default function Identity({
   setName: (n: string) => void;
   emoji: string;
   setEmoji: (e: string) => void;
+  birthday: string;
+  setBirthday: (b: string) => void;
   onNext: () => void;
   saving: boolean;
   error: string;
@@ -37,7 +41,7 @@ export default function Identity({
       />
 
       <div className="text-xs font-bold text-fg-muted tracking-widest uppercase mb-2.5">Pick your animal</div>
-      <div className="grid grid-cols-5 gap-2 mb-auto">
+      <div className="grid grid-cols-5 gap-2 mb-5">
         {ANIMAL_EMOJIS.map((e) => (
           <button
             key={e}
@@ -51,6 +55,18 @@ export default function Identity({
           </button>
         ))}
       </div>
+
+      <div className="text-xs font-bold text-fg-muted tracking-widest uppercase mb-2.5 flex items-center gap-2">
+        <span>Birthday</span>
+        <span className="text-fg-faint font-medium tracking-normal normal-case">— optional, but the squad knows</span>
+      </div>
+      <input
+        type="date"
+        value={birthday}
+        onChange={(e) => setBirthday(e.target.value)}
+        max={new Date().toISOString().split("T")[0]}
+        className="w-full px-4 py-3.5 bg-card border border-line rounded-2xl text-fg text-base placeholder:text-fg-faint focus:outline-none focus:border-terracotta transition mb-auto"
+      />
 
       {error && <p className="text-xs text-terracotta mt-3">{error}</p>}
 
