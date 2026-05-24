@@ -1,6 +1,14 @@
 "use client";
 import { useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
+import Dropdown from "@/components/Dropdown";
+
+const VENDOR_TYPES = [
+  { value: "restaurant", label: "Restaurant / bar", emoji: "🍷" },
+  { value: "experience", label: "Experience / activity", emoji: "🎯" },
+  { value: "venue", label: "Venue", emoji: "🏛️" },
+  { value: "other", label: "Other", emoji: "✨" },
+];
 
 export default function DealsTeaser() {
   const [open, setOpen] = useState(false);
@@ -83,16 +91,13 @@ export default function DealsTeaser() {
               placeholder="Your email"
               className="w-full px-3 py-2.5 bg-[#1A1A18] border border-[#2A2826] rounded-lg text-bone text-sm placeholder:text-[#3A3835] focus:outline-none focus:border-sun"
             />
-            <select
+            <Dropdown
               value={vendorType}
-              onChange={(e) => setVendorType(e.target.value)}
-              className="w-full px-3 py-2.5 bg-[#1A1A18] border border-[#2A2826] rounded-lg text-bone text-sm focus:outline-none focus:border-sun"
-            >
-              <option value="restaurant">Restaurant / bar</option>
-              <option value="experience">Experience / activity</option>
-              <option value="venue">Venue</option>
-              <option value="other">Other</option>
-            </select>
+              onChange={setVendorType}
+              options={VENDOR_TYPES}
+              accent="#F2A623"
+              size="sm"
+            />
             {error && <p className="text-xs text-terracotta">{error}</p>}
             <div className="flex gap-2">
               <button type="button" onClick={() => setOpen(false)} className="px-3 py-2 text-xs text-[#8B7355] font-semibold">Cancel</button>

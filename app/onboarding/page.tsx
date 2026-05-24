@@ -84,7 +84,11 @@ export default function OnboardingPage() {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col px-7 pb-8 overflow-y-auto">
+      <div
+        key={step}
+        className="flex-1 flex flex-col px-7 pb-8 overflow-y-auto"
+        style={{ animation: "step-in 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both" }}
+      >
         {step === 0 && <Step0Welcome onNext={next} />}
         {step === 1 && <Step1Pain onNext={next} />}
         {step === 2 && <Step2Magic onNext={next} />}
