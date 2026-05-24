@@ -78,9 +78,9 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
   const heroMeta = hero ? relativeMeta(hero.starts_at) : null;
 
   return (
-    <main className="min-h-screen bg-ink text-bone">
-      <header className="sticky top-0 z-10 backdrop-blur-xl bg-ink/85 border-b border-[#1F1D1B] px-5 py-4">
-        <Link href="/app" className="inline-flex items-center gap-1 text-xs text-[#8B7355] hover:text-bone">
+    <main className="min-h-screen bg-page text-fg">
+      <header className="sticky top-0 z-10 backdrop-blur-xl bg-page/85 border-b border-line-soft px-5 py-4">
+        <Link href="/app" className="inline-flex items-center gap-1 text-xs text-fg-muted hover:text-fg transition">
           <ArrowLeft size={12} /> All squads
         </Link>
       </header>
@@ -90,7 +90,7 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
           <div className="text-5xl leading-none">{squad.emoji}</div>
           <div className="flex-1 min-w-0">
             <h1 className="display text-3xl font-bold leading-tight truncate">{squad.name}</h1>
-            <p className="text-sm text-[#8B7355] mt-0.5">{members?.length || 0} {members?.length === 1 ? "member" : "members"}</p>
+            <p className="text-sm text-fg-muted mt-0.5">{members?.length || 0} {members?.length === 1 ? "member" : "members"}</p>
           </div>
           <Link href={`/app/squad/${squad.id}/hangout/new`} className="p-3 bg-terracotta text-ink rounded-full hover:opacity-90 active:scale-95 transition" aria-label="New hangout">
             <Plus size={20} strokeWidth={2.5} />
@@ -99,7 +99,7 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
 
         {/* Upcoming — hero + rest */}
         <section className="mb-8">
-          <div className="text-[10px] font-bold text-[#8B7355] tracking-[0.25em] uppercase mb-3">Upcoming</div>
+          <div className="text-[10px] font-bold text-fg-muted tracking-[0.25em] uppercase mb-3">Upcoming</div>
 
           {hero ? (
             <>
@@ -135,11 +135,11 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
                       <div className="display text-[26px] font-bold leading-[1.1] text-bone mb-2 break-words">
                         {hero.title}
                       </div>
-                      <div className="flex items-center gap-2 text-[13px] text-[#D4CFC7]/80">
+                      <div className="flex items-center gap-2 text-[13px] text-bone/75">
                         <span className="text-xl leading-none">{hero.cover_emoji || "🍻"}</span>
                         {heroMeta?.time && (
                           <>
-                            <span className="w-1 h-1 rounded-full bg-[#D4CFC7]/40" />
+                            <span className="w-1 h-1 rounded-full bg-bone/40" />
                             <span className="font-medium">{heroMeta.time}</span>
                           </>
                         )}
@@ -148,7 +148,7 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
                   </div>
 
                   <div className="flex items-center justify-between mt-6 pt-5 border-t border-terracotta/15">
-                    <div className="text-[11px] text-[#D4CFC7]/70 font-medium tracking-wide">
+                    <div className="text-[11px] text-bone/65 font-medium tracking-wide">
                       Tap to see who's in
                     </div>
                     <div className="flex items-center gap-1 text-terracotta font-bold text-xs">
@@ -161,7 +161,7 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
               {/* Rest of upcoming as compact rows */}
               {rest.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  <div className="text-[10px] font-bold text-[#8B7355]/70 tracking-[0.25em] uppercase mb-1.5 pl-1">
+                  <div className="text-[10px] font-bold text-fg-muted/80 tracking-[0.25em] uppercase mb-1.5 pl-1">
                     Then…
                   </div>
                   {rest.map((h: Hangout) => {
@@ -170,16 +170,16 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
                       <Link
                         key={h.id}
                         href={`/app/squad/${squad.id}/hangout/${h.id}`}
-                        className="block p-3.5 bg-[#1A1A18] border border-[#2A2826] rounded-xl hover:border-terracotta/30 transition flex items-center gap-3"
+                        className="block p-3.5 bg-card border border-line rounded-xl hover:border-terracotta/30 transition flex items-center gap-3"
                       >
                         <div className="text-2xl leading-none">{h.cover_emoji || "🍻"}</div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-bold truncate">{h.title}</div>
-                          <div className="text-[11px] text-[#8B7355] mt-0.5 truncate">
+                          <div className="text-[11px] text-fg-muted mt-0.5 truncate">
                             {m ? m.line : "Date TBD"}{m?.time ? ` · ${m.time}` : ""}
                           </div>
                         </div>
-                        <ChevronRight size={14} className="text-[#3A3835]" />
+                        <ChevronRight size={14} className="text-fg-faint" />
                       </Link>
                     );
                   })}
@@ -189,13 +189,13 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
           ) : (
             <Link
               href={`/app/squad/${squad.id}/hangout/new`}
-              className="relative block overflow-hidden p-7 bg-[#1A1614] border border-dashed border-[#3A3835] rounded-3xl text-center hover:border-terracotta/50 transition group grain"
+              className="relative block overflow-hidden p-7 bg-card-soft border border-dashed border-line rounded-3xl text-center hover:border-terracotta/50 transition group grain"
             >
               <div className="relative">
                 <div className="text-4xl mb-3 transition-transform group-hover:-rotate-6">🍻</div>
                 <div className="display italic text-base text-terracotta tracking-wide mb-1">Nothing on the cards</div>
                 <div className="display text-2xl font-bold mb-2 leading-tight">Plan something.</div>
-                <div className="text-xs text-[#8B7355]">The agent waits for instructions.</div>
+                <div className="text-xs text-fg-muted">The agent waits for instructions.</div>
               </div>
             </Link>
           )}
@@ -208,14 +208,14 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1.5">
                   <Flame size={12} className="text-terracotta" />
-                  <div className="text-[10px] font-bold text-[#8B7355] tracking-[0.25em] uppercase">Squad Stats</div>
+                  <div className="text-[10px] font-bold text-fg-muted tracking-[0.25em] uppercase">Squad Stats</div>
                 </div>
                 <div className="text-xs text-terracotta font-semibold">View all →</div>
               </div>
-              <div className="bg-[#1A1A18] border border-[#2A2826] rounded-2xl overflow-hidden hover:border-terracotta/40 transition">
+              <div className="bg-card border border-line rounded-2xl overflow-hidden hover:border-terracotta/40 transition">
                 {stats.map((s: any, i: number) => (
-                  <div key={s.user_id} className={`px-4 py-3 flex items-center gap-3 ${i < stats.length - 1 ? "border-b border-[#2A2826]" : ""}`}>
-                    <div className="display text-base font-bold w-4" style={{ color: i === 0 ? "#F2A623" : "#3A3835" }}>{i + 1}</div>
+                  <div key={s.user_id} className={`px-4 py-3 flex items-center gap-3 ${i < stats.length - 1 ? "border-b border-line" : ""}`}>
+                    <div className={`display text-base font-bold w-4 ${i === 0 ? "text-sun" : "text-fg-faint"}`}>{i + 1}</div>
                     <div className="text-xl">{s.emoji}</div>
                     <div className="flex-1 text-sm font-bold">{s.name} {i === 0 && "👑"}</div>
                     <div className="text-xs font-bold" style={{ color: s.reply_rate > 80 ? "#7BA77B" : s.reply_rate > 50 ? "#F2A623" : "#E8593C" }}>{s.reply_rate}%</div>
@@ -230,7 +230,7 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
         <section className="mb-6">
           <div className="flex items-center gap-1.5 mb-3">
             <Tag size={12} className="text-sun" />
-            <div className="text-[10px] font-bold text-[#8B7355] tracking-[0.25em] uppercase">Tonight's deals</div>
+            <div className="text-[10px] font-bold text-fg-muted tracking-[0.25em] uppercase">Tonight's deals</div>
           </div>
           <DealsTeaser />
         </section>
@@ -239,13 +239,13 @@ export default async function SquadPage({ params }: { params: { id: string } }) 
         <section className="mb-6">
           <div className="flex items-center gap-1.5 mb-3">
             <Users size={12} className="text-terracotta" />
-            <div className="text-[10px] font-bold text-[#8B7355] tracking-[0.25em] uppercase">Squad</div>
+            <div className="text-[10px] font-bold text-fg-muted tracking-[0.25em] uppercase">Squad</div>
           </div>
-          <div className="bg-[#1A1A18] border border-[#2A2826] rounded-2xl overflow-hidden">
+          <div className="bg-card border border-line rounded-2xl overflow-hidden">
             {members?.map((m: any, i: number) => (
-              <div key={m.users.id} className={`px-4 py-3 flex items-center gap-3 ${i < (members.length - 1) ? "border-b border-[#2A2826]" : ""}`}>
+              <div key={m.users.id} className={`px-4 py-3 flex items-center gap-3 ${i < (members.length - 1) ? "border-b border-line" : ""}`}>
                 <div className="text-2xl">{m.users.emoji}</div>
-                <div className="flex-1 text-sm font-bold">{m.users.name}{m.users.id === user.id && <span className="text-[#8B7355] font-normal"> · you</span>}</div>
+                <div className="flex-1 text-sm font-bold">{m.users.name}{m.users.id === user.id && <span className="text-fg-muted font-normal"> · you</span>}</div>
                 {m.role === "organiser" && <div className="text-[9px] font-bold text-terracotta px-2 py-0.5 bg-terracotta/10 rounded">ORGANISER</div>}
               </div>
             ))}

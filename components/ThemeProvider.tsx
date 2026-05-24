@@ -6,45 +6,46 @@ type Theme = "dark" | "light";
 
 interface ThemeContextValue {
   theme: Theme;
+  setTheme: (t: Theme) => void;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: "dark",
+  setTheme: () => {},
   toggleTheme: () => {},
 });
 
-export function ThemeProvider({ children, initialTheme = "dark" }: { children: ReactNode; initialTheme?: Theme }) {
-  const [theme, setTheme] = useState<Theme>(initialTheme);
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  // Initialize from the data-theme attr the inline boot script already set on <html>.
+  // Defaults to "dark" if we're outside the browser (SSR) — boot script will fix on hydrate.
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof document === "undefined") return "dark";
+    return (document.documentElement.dataset.theme as Theme) || "dark";
+  });
 
-  // Hydrate from localStorage on mount (only if no server-side preference passed)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("hangouts-theme") as Theme | null;
-    if (stored && stored !== theme) setTheme(stored);
-  }, []);
-
-  // Apply to html element for global CSS hooks
+  // Sync state -> DOM whenever theme changes after hydrate.
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
   }, [theme]);
 
-  async function toggleTheme() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
+  function setTheme(next: Theme) {
+    setThemeState(next);
     if (typeof window !== "undefined") localStorage.setItem("hangouts-theme", next);
-
-    // Persist to profile if logged in. Fire-and-forget.
+    // Fire-and-forget persist to profile.
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      supabase.from("users").update({ theme_preference: next }).eq("id", user.id);
-    }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) supabase.from("users").update({ theme_preference: next }).eq("id", user.id);
+    });
   }
 
-  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
+  function toggleTheme() {
+    setTheme(theme === "dark" ? "light" : "dark");
+  }
+
+  return <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

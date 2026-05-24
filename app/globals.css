@@ -4,11 +4,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────
+   THEME TOKENS — channels only (rgb triples) so Tailwind
+   can compose alpha via /<alpha-value>.
+   Dark is default. Light overrides under [data-theme="light"].
+   ───────────────────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  --c-page:      15 14 12;       /* #0F0E0C ink */
+  --c-card:      26 26 24;       /* #1A1A18 */
+  --c-card-soft: 22 20 19;       /* #161413 — warmer card variant */
+  --c-fg:        250 248 245;    /* #FAF8F5 bone */
+  --c-fg-muted:  139 115 85;     /* #8B7355 warm taupe */
+  --c-fg-faint:  58 56 53;       /* #3A3835 */
+  --c-line:      42 40 38;       /* #2A2826 */
+  --c-line-soft: 31 29 27;       /* #1F1D1B */
+}
+
+[data-theme="light"] {
+  --c-page:      247 242 234;    /* #F7F2EA warm cream */
+  --c-card:      255 252 246;    /* #FFFCF6 paper */
+  --c-card-soft: 242 235 222;    /* #F2EBDE sandcard */
+  --c-fg:        26 22 20;       /* #1A1614 deep ink */
+  --c-fg-muted:  120 99 70;      /* #786346 toasted */
+  --c-fg-faint:  176 165 149;    /* #B0A595 */
+  --c-line:      222 211 191;    /* #DED3BF parchment */
+  --c-line-soft: 235 226 209;    /* #EBE2D1 */
+}
+
 html, body {
-  background: #0F0E0C;
-  color: #FAF8F5;
+  background: rgb(var(--c-page));
+  color: rgb(var(--c-fg));
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 * { -webkit-tap-highlight-color: transparent; }
@@ -23,13 +52,14 @@ html, body {
 @keyframes step-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes stamp { 0% { transform: scale(0.92); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
 @keyframes confirm-rise { 0% { opacity: 0; transform: translateY(8px); } 12% { opacity: 1; transform: translateY(0); } 78% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-6px); } }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes draw-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(232,89,60,0); } 50% { box-shadow: 0 0 0 8px rgba(232,89,60,0.12); } }
 
 .pulse { animation: pulse-dot 2s infinite; }
 .slide-up { animation: slide-up 0.4s ease-out both; }
 .float { animation: float 4s ease-in-out infinite; }
 
-/* Editorial grain overlay — pairs with terracotta hero card */
+/* Editorial grain — pairs with terracotta hero card. Themes-agnostic. */
 .grain::after {
   content: "";
   position: absolute;
@@ -41,6 +71,12 @@ html, body {
   border-radius: inherit;
 }
 
+[data-theme="light"] .grain::after {
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2A2826; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgb(var(--c-line)); border-radius: 3px; }
