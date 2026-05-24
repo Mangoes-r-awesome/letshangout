@@ -1,4 +1,4 @@
-import { createAdminClient, createClient } from "@/lib/supabase-server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import JoinButton from "@/components/JoinButton";
 

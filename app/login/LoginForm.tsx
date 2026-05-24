@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ArrowLeft, Phone, Mail, Check } from "lucide-react";
-import { createClient } from "@/lib/supabase-browser";
+import { createClient } from "@/lib/supabase/client";
 
 type Method = "phone" | "email";
 type PhoneStep = "phone" | "code";

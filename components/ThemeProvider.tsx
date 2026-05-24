@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { createClient } from "@/lib/supabase-browser";
+import { createClient } from "@/lib/supabase/client";
 
 type Theme = "dark" | "light";
 

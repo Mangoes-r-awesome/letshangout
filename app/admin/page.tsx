@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowLeft, TrendingUp, Users, Calendar as CalIcon, MessageSquare } from "lucide-react";
 

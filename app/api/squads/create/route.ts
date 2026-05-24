@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase-server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 function generateCode(length = 6): string {
   // Avoid lookalike chars (0/O, 1/I/l)

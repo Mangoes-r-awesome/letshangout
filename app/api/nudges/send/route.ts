@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase-server";
-import { sendSms } from "@/lib/twilio";
-import { generateNudge } from "@/lib/claude";
-import { hangoutDeepLink } from "@/lib/short-code";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { sendSms } from "@/lib/integrations/twilio";
+import { generateNudge } from "@/lib/integrations/claude";
+import { hangoutDeepLink } from "@/lib/utils/short-code";
 
 export async function POST(req: NextRequest) {
   try {

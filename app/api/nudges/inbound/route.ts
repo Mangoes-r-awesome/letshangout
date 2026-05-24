@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase-server";
-import { validateTwilioSignature, sendSms } from "@/lib/twilio";
-import { parseRsvpReply } from "@/lib/claude";
+import { createAdminClient } from "@/lib/supabase/server";
+import { validateTwilioSignature, sendSms } from "@/lib/integrations/twilio";
+import { parseRsvpReply } from "@/lib/integrations/claude";
 
 // Twilio posts as application/x-www-form-urlencoded with these fields:
 // From, To, Body, MessageSid, AccountSid, ...

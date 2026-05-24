@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase-server";
-import { sendSms } from "@/lib/twilio";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { sendSms } from "@/lib/integrations/twilio";
 
 const VALID_STATUSES = ["in", "maybe", "out", "pending"] as const;
 
