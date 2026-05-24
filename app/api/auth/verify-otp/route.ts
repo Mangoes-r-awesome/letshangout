@@ -1,17 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { parseBody } from "@/lib/utils/validate";
+import { rateLimit, clientIp } from "@/lib/utils/rate-limit";
+import { log } from "@/lib/utils/logger";
+
+const Schema = z.object({
+  phone: z.string().regex(/^\+\d{8,15}$/, "must be E.164"),
+  code: z.string().regex(/^\d{4,8}$/, "must be a 4-8 digit code"),
+});
 
 export async function POST(req: NextRequest) {
-  try {
-    const { phone, code } = await req.json();
-    if (!phone || !code) {
-      return NextResponse.json({ error: "Phone and code required" }, { status: 400 });
-    }
+  const ip = clientIp(req);
 
+  // 8 attempts / 10 min per IP to slow brute-force.
+  const limit = rateLimit(`verify-otp:ip:${ip}`, 8, 10 * 60_000);
+  if (!limit.ok) {
+    log.warn("auth/verify-otp", "rate limit hit", { ip });
+    return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
+  }
+
+  const parsed = await parseBody(req, Schema);
+  if (parsed instanceof NextResponse) return parsed;
+
+  try {
     const supabase = createClient();
     const { data, error } = await supabase.auth.verifyOtp({
-      phone,
-      token: code,
+      phone: parsed.phone,
+      token: parsed.code,
       type: "sms",
     });
 
@@ -22,7 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create profile row if first-time. Use admin client to bypass RLS.
+    // Create profile row if first-time. Admin client bypasses RLS.
     const admin = createAdminClient();
     const { data: existing } = await admin
       .from("users")
@@ -45,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, needsOnboarding });
   } catch (err: any) {
-    console.error("[verify-otp] error:", err);
+    log.error("auth/verify-otp", "unhandled error", { message: err?.message });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
